@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS operation_commands;
+DROP TABLE IF EXISTS operation_principals;
+DROP TABLE IF EXISTS operation_targets;
+DROP TABLE IF EXISTS operations;
+DROP TABLE IF EXISTS role_assignments;
+DROP TABLE IF EXISTS account_assignments;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS villages;
+DROP TABLE IF EXISTS players;
+DROP TABLE IF EXISTS tribes;

@@ -1,0 +1,92 @@
+# Docker Compose
+services:
+  web-frontend:
+    image: node:22-alpine
+    container_name: web-frontend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./web/frontend:/app    
+    working_dir: /app
+    entrypoint: sh
+    stdin_open: true
+    tty: true
+    networks: 
+      - external-network
+  web-backend:
+    build:
+      context: web/backend
+    env_file: ".env"
+    container_name: web-backend
+    working_dir: /app
+    depends_on:
+      - tool-database-engine
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    networks: 
+      - database-internal-network
+      - external-network
+  background-service-scraper:
+    build:
+      context: services/background-service-scraper
+    env_file: ".env"
+    container_name: background-service-scraper
+    working_dir: /app
+    depends_on:
+      - tool-database-engine
+      - tool-cache-engine
+    restart: unless-stopped
+    networks:
+      - cache-internal-network
+      - database-internal-network
+      - external-network
+  tool-database-dashboard:
+    env_file: ".env"
+    image: dpage/pgadmin4:9.8.0
+    container_name: tool-database-dashboard
+    ports:
+      - ${PGADMIN_PORT}:80
+    depends_on:
+      - tool-database-engine
+    volumes:
+      - vol_twc_database:/var/lib/pgadmin
+    networks:
+      - database-internal-network
+      - external-network
+  tool-database-engine:
+    env_file: ".env"
+    image: postgres:18.0-alpine3.22
+    container_name: tool-database-engine
+    volumes:
+      - vol_twc_database:/var/lib/postgresql/data
+      - vol_twc_database:/var/lib/postgresql
+    restart: unless-stopped
+    networks:
+      - database-internal-network
+  tool-cache-engine:
+    image: redis:8-alpine
+    container_name: tool-cache-engine
+    restart: unless-stopped
+    volumes:
+      - vol_twc_cache:/data
+    networks:
+      - cache-internal-network
+
+volumes:
+  vol_twc_database:
+    name: "vol-twc-database"
+  vol_twc_cache:
+    name: "vol-twc-cache"
+
+networks:
+  external-network:
+    driver: bridge
+  database-internal-network:
+    driver: bridge
+    internal: true
+  cache-internal-network:
+    driver: bridge
+    internal: true
