@@ -1,8 +1,10 @@
 import { getUserMeQuery } from '@/queries/getUserQuery'
 import type { dtoUser } from '@/types/app.types'
 import type { QueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { AxiosError } from 'axios'
-import * as React from 'react'
+import React, { useCallback, useMemo } from 'react'
+import CONSTS from '@/consts'
 
 export interface AuthContext {
   login: () => void
@@ -10,6 +12,7 @@ export interface AuthContext {
   user: dtoUser | null
   isLoading: boolean
   error: AxiosError | null
+  refetchUser: () => void
 }
 
 interface AuthProviderProps {
@@ -20,55 +23,34 @@ interface AuthProviderProps {
 const AuthContext = React.createContext<AuthContext | null>(null)
 
 export function Provider({ children, client }: AuthProviderProps) {
-  const [user, setUser] = React.useState<dtoUser | null>(null)
-  const [isLoading, setIsLoading] = React.useState<boolean>(true)
-  const [error, setError] = React.useState<AxiosError | null>(null)
-  const logout = React.useCallback(async () => {
-    window.location.href = 'http://localhost:8000/api/auth/logout'
+  const login = useCallback(() => {
+    window.location.href = CONSTS.AUTH_URLS_LOGIN
   }, [])
 
-  const login = React.useCallback(async () => {
-    window.location.href = 'http://localhost:8000/api/auth/google'
+  const logout = useCallback(() => {
+    window.location.href = CONSTS.AUTH_URLS_LOGOUT
   }, [])
 
-  const verify = async () => {
-    setIsLoading(true)
-    const timestamp = Date.now()
-    try {
-      const value = await client.fetchQuery(getUserMeQuery())
-      setTimeout(
-        () => {
-          setUser(value)
-          setIsLoading(false)
-        },
-        Math.min(1000 - (Date.now() - timestamp), 1000)
-      )
-    } catch (err) {
-      if (err instanceof AxiosError) {
-        setError(err)
-      }
-      setUser(null)
-      setIsLoading(false)
-    }
-  }
+  const { data, isLoading, error, refetch } = useQuery({
+    ...getUserMeQuery(),
+    queryFn: () => client.fetchQuery(getUserMeQuery()),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  })
 
-  React.useEffect(() => {
-    verify()
-  }, [])
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        isLoading,
-        error,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      user: data ?? null,
+      isLoading,
+      error: error instanceof AxiosError ? error : null,
+      login,
+      logout,
+      refetchUser: refetch,
+    }),
+    [data, isLoading, error, login, logout, refetch],
   )
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

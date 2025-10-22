@@ -5,26 +5,38 @@ import { createFileRoute, Outlet } from '@tanstack/react-router'
 import styled from 'styled-components'
 
 export const Route = createFileRoute('/tools')({
-  component: RouteComponent,
+  component: ToolsRoute,
 })
 
-function RouteComponent() {
-  const context = useAuth()
-  if (context.user == null)
+function ToolsRoute() {
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <CenteredWrapper>
+        <p>Loading...</p>
+      </CenteredWrapper>
+    )
+  }
+
+  if (!user) {
     return (
       <CenteredWrapper>
         <LoginComponent />
       </CenteredWrapper>
     )
+  }
+
   return (
     <>
       <NavigationComponent />
-      <Wrapper>
+      <MainContentWrapper>
         <Outlet />
-      </Wrapper>
+      </MainContentWrapper>
     </>
   )
 }
+
 const CenteredWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -33,7 +45,7 @@ const CenteredWrapper = styled.div`
   height: 100vh;
 `
 
-const Wrapper = styled.div`
+const MainContentWrapper = styled.div`
   position: relative;
   margin-left: 60px;
   padding: 10px;

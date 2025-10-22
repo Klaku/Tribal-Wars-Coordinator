@@ -2,27 +2,23 @@ import LoginComponent from '@/components/login'
 import { useAuth } from '@/providers/auth-provider'
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
 import styled from 'styled-components'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/')({
   component: App,
 })
 
 function App() {
-  const context = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate({ from: '/' })
-  function Layout() {
-    if (context.user != null) {
-      navigate({ to: '/tools/operations' })
-      return <Outlet />
-    }
-    return <LoginComponent />
-  }
 
-  return (
-    <Wrapper>
-      <Layout />
-    </Wrapper>
-  )
+  useEffect(() => {
+    if (user) {
+      navigate({ to: '/tools/operations' })
+    }
+  }, [user, navigate])
+
+  return <Wrapper>{user ? <Outlet /> : <LoginComponent />}</Wrapper>
 }
 
 const Wrapper = styled.div`

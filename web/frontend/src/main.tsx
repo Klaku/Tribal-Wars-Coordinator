@@ -1,20 +1,16 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
-import { routeTree } from './routeTree.gen'
-import * as QueryProvider from './providers/query-provider'
-import * as FluentProvider from './providers/fluent-provider'
+import { routeTree } from '@/routeTree.gen'
+import * as QueryProvider from '@/providers/query-provider'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
-import * as AuthProvider from './providers/auth-provider'
-import './assets/styles.css'
-import { ToastContextProvider } from './providers/toast-provider'
+import { IndexProvider } from '@/providers/index-provider'
+import '@/assets/styles.css'
 
-const QueryProviderContext = QueryProvider.getContext()
+const queryContext = QueryProvider.getContext()
 
 const router = createRouter({
   routeTree,
-  context: {
-    ...QueryProviderContext,
-  },
+  context: queryContext,
   defaultStructuralSharing: true,
 })
 
@@ -24,23 +20,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+function App() {
+  return (
+    <IndexProvider client={queryContext.client}>
+      <RouterProvider router={router} context={queryContext} />
+    </IndexProvider>
+  )
+}
+
 const rootElement = document.getElementById('app')
-if (rootElement && !rootElement.innerHTML) {
+if (rootElement) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <AuthProvider.Provider client={QueryProviderContext.client}>
-        <QueryProvider.Provider client={QueryProviderContext.client}>
-          <FluentProvider.Provider>
-            <ToastContextProvider>
-              <RouterProvider
-                router={router}
-                context={{ ...QueryProviderContext }}
-              />
-            </ToastContextProvider>
-          </FluentProvider.Provider>
-        </QueryProvider.Provider>
-      </AuthProvider.Provider>
-    </StrictMode>
+      <App />
+    </StrictMode>,
   )
 }

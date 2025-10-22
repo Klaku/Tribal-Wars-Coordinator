@@ -8,9 +8,7 @@ export const Route = createFileRoute('/tools/recruitment')({
 function RouteComponent() {
   return (
     <PageWrapper>
-      <MarkdownComponent>
-        {`Tutaj gracze widzą czego dotyczy akcja `}
-      </MarkdownComponent>
+      <MarkdownComponent>{`Tutaj gracze widzą czego dotyczy akcja `}</MarkdownComponent>
     </PageWrapper>
   )
 }

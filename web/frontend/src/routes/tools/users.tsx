@@ -1,9 +1,11 @@
-import { PageWrapper, Tbody, Thead } from '@/assets/styled'
+import { PageWrapper, Tbody } from '@/assets/styled'
+import { TableHeader } from '@/components/users/table-header'
 import TableRow from '@/components/users/table-row'
 import { getUserListQuery } from '@/queries/getUserQuery'
 import type { dtoUser } from '@/types/app.types'
-import { Table, Text } from '@fluentui/react-components'
+import { Table } from '@fluentui/react-components'
 import { createFileRoute, useLoaderData } from '@tanstack/react-router'
+
 export const Route = createFileRoute('/tools/users')({
   component: RouteComponent,
   loader: ({ context }) => {
@@ -14,53 +16,32 @@ export const Route = createFileRoute('/tools/users')({
 function RouteComponent() {
   const data = useLoaderData({ from: '/tools/users' })
 
-  const TableHeader = () => {
-    return (
-      <Thead>
-        <tr>
-          <td>
-            <Text weight="medium">Konto</Text>
-          </td>
-          <td>
-            <Text weight="medium">Gracze</Text>
-          </td>
-          <td>
-            <Text weight="medium">Radny</Text>
-          </td>
-          <td>
-            <Text weight="medium">Gracz</Text>
-          </td>
-        </tr>
-      </Thead>
-    )
-  }
-
-  const sortFn = (a: dtoUser, b: dtoUser) => {
-    let aadmin = a.roles.some((x) => x.role_id == 1)
-    let badmin = b.roles.some((x) => x.role_id == 1)
-
-    if (aadmin && !badmin) return -1
-    if (badmin && !aadmin) return 1
-
-    let amember = a.roles.some((x) => x.role_id == 2)
-    let bmember = b.roles.some((x) => x.role_id == 2)
-
-    if (amember && !bmember) return -1
-    if (!amember && bmember) return 1
-
-    return a.user_email.localeCompare(b.user_email)
-  }
-
   return (
     <PageWrapper>
       <Table>
         <TableHeader />
         <Tbody>
-          {data.sort(sortFn).map((dtoUser) => {
-            return <TableRow key={dtoUser.user_id} item={dtoUser} />
-          })}
+          {data.sort(sortFn).map((user) => (
+            <TableRow key={user.user_id} item={user} />
+          ))}
         </Tbody>
       </Table>
     </PageWrapper>
   )
+}
+
+const sortFn = (a: dtoUser, b: dtoUser) => {
+  const aIsAdmin = a.roles.some((role) => role.role_id === 1)
+  const bIsAdmin = b.roles.some((role) => role.role_id === 1)
+
+  if (aIsAdmin && !bIsAdmin) return -1
+  if (bIsAdmin && !aIsAdmin) return 1
+
+  const aIsMember = a.roles.some((role) => role.role_id === 2)
+  const bIsMember = b.roles.some((role) => role.role_id === 2)
+
+  if (aIsMember && !bIsMember) return -1
+  if (!aIsMember && bIsMember) return 1
+
+  return a.user_email.localeCompare(b.user_email)
 }
